@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { StyleSheet, Text, View, TouchableOpacity, ScrollView } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { MaterialIcons } from "@expo/vector-icons";
 
 const BUTTONS = [
   ["⌫", "+/-", "%", "÷"],
@@ -13,10 +14,11 @@ const BUTTONS = [
 
 export default function App() {
   const [display, setDisplay] = useState("0");
-  const [first, setFirst] = useState(null);
-  const [operator, setOperator] = useState(null);
+  const [first, setFirst] = useState<string | null>(null);
+  const [operator, setOperator] = useState<string | null>(null);
   const [waitingForSecond, setWaitingForSecond] = useState(false);
-  const [history, setHistory] = useState<string[]>([]);
+  const [history, setHistory] = useState<{ exp: string; res: string }[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
 
   const resetAll = () => {
     setDisplay("0");
@@ -41,9 +43,7 @@ export default function App() {
       setWaitingForSecond(false);
       return;
     }
-    if (!display.includes(".")) {
-      setDisplay(display + ".");
-    }
+    if (!display.includes(".")) setDisplay(display + ".");
   };
 
   const handleBackspace = () => {
@@ -99,8 +99,9 @@ export default function App() {
     }
 
     const formatted = res.toString();
-    const operation = `${a} ${operator} ${b} = ${formatResult(formatted)}`;
-    setHistory((prev) => [operation, ...prev.slice(0, 4)]); // guarda las últimas 5
+    const result = formatResult(formatted);
+    const operation = `${a} ${operator} ${b}`;
+    setHistory((prev) => [{ exp: operation, res: result }, ...prev.slice(0, 4)]);
     return formatted;
   };
 
@@ -144,18 +145,42 @@ export default function App() {
       <View style={styles.container}>
         <StatusBar style="light" />
 
+        {/* Botón para mostrar historial */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => setShowHistory(!showHistory)}>
+            <MaterialIcons
+              name={showHistory ? "expand-less" : "expand-more"}
+              size={28}
+              color="#bbb"
+            />
+          </TouchableOpacity>
+
+          {showHistory && (
+            <TouchableOpacity onPress={() => setHistory([])} style={styles.clearButton}>
+              <MaterialIcons name="delete-outline" size={24} color="#bbb" />
+            </TouchableOpacity>
+          )}
+        </View>
+
         {/* Historial */}
-        <ScrollView
-          style={styles.historyContainer}
-          contentContainerStyle={{ alignItems: "flex-end" }}
-          showsVerticalScrollIndicator={false}
-        >
-          {history.map((item, index) => (
-            <Text key={index} style={styles.historyText}>
-              {item}
-            </Text>
-          ))}
-        </ScrollView>
+        {showHistory && (
+          <ScrollView
+            style={styles.historyContainer}
+            contentContainerStyle={{ alignItems: "flex-end" }}
+            showsVerticalScrollIndicator={false}
+          >
+            {history.length === 0 ? (
+              <Text style={styles.historyEmpty}>Sin historial</Text>
+            ) : (
+              history.map((item, index) => (
+                <View key={index} style={styles.historyRow}>
+                  <Text style={styles.historyExp}>{item.exp}</Text>
+                  <Text style={styles.historyRes}>= {item.res}</Text>
+                </View>
+              ))
+            )}
+          </ScrollView>
+        )}
 
         {/* Display */}
         <View style={styles.displayContainer}>
@@ -205,8 +230,19 @@ export default function App() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "#0b0b0b" },
   container: { flex: 1, backgroundColor: "#0b0b0b", paddingHorizontal: 20, paddingBottom: 24 },
-  historyContainer: { flexGrow: 0, maxHeight: 120, marginTop: 10 },
-  historyText: { color: "#888", fontSize: 16, marginBottom: 4, textAlign: "right" },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 10,
+    marginBottom: 6,
+  },
+  clearButton: { padding: 4 },
+  historyContainer: { maxHeight: 140, marginBottom: 6 },
+  historyEmpty: { color: "#555", fontSize: 16 },
+  historyRow: { flexDirection: "row", alignItems: "center" },
+  historyExp: { color: "#888", fontSize: 16, marginBottom: 2, textAlign: "right" },
+  historyRes: { color: "#aaa", fontSize: 18, marginLeft: 6 },
   displayContainer: { flex: 1, justifyContent: "flex-end", paddingVertical: 30 },
   displayText: {
     color: "#fff",
