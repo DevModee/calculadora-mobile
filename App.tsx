@@ -70,16 +70,18 @@ export default function App() {
     if (first === null) {
       setFirst(display);
       setOperator(op);
+      setDisplay(display + " " + op);
       setWaitingForSecond(true);
     } else {
       if (!waitingForSecond) {
         const result = computeResult();
         setFirst(result);
-        setDisplay(formatResult(result));
+        setDisplay(formatResult(result) + " " + op);
         setOperator(op);
         setWaitingForSecond(true);
       } else {
         setOperator(op);
+        setDisplay(first + " " + op);
       }
     }
   };
