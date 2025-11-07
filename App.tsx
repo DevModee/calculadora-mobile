@@ -165,17 +165,17 @@ export default function App() {
         {/* Historial */}
         {showHistory && (
           <ScrollView
-            style={styles.historyContainer}
-            contentContainerStyle={{ alignItems: "flex-end" }}
-            showsVerticalScrollIndicator={false}
+            style={styles.historyScroll}
+            contentContainerStyle={{ paddingBottom: 8 }}
           >
             {history.length === 0 ? (
-              <Text style={styles.historyEmpty}>Sin historial</Text>
+              <Text style={{ color: "#aaa", textAlign: "center" }}>Sin historial</Text>
             ) : (
               history.map((item, index) => (
-                <View key={index} style={styles.historyRow}>
-                  <Text style={styles.historyExp}>{item.exp}</Text>
-                  <Text style={styles.historyRes}>= {item.res}</Text>
+                <View key={index} style={styles.historyItem}>
+                  <Text style={styles.historyText}>
+                    {item.exp} = {item.res}
+                  </Text>
                 </View>
               ))
             )}
@@ -238,11 +238,25 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   clearButton: { padding: 4 },
-  historyContainer: { maxHeight: 140, marginBottom: 6 },
-  historyEmpty: { color: "#555", fontSize: 16 },
-  historyRow: { flexDirection: "row", alignItems: "center" },
-  historyExp: { color: "#888", fontSize: 16, marginBottom: 2, textAlign: "right" },
-  historyRes: { color: "#aaa", fontSize: 18, marginLeft: 6 },
+  historyScroll: {
+    backgroundColor: "#222",
+    maxHeight: 150,
+    marginTop: 10,
+    borderRadius: 10,
+    padding: 10,
+  },
+  historyItem: {
+    marginBottom: 6,
+    backgroundColor: "#333",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  historyText: {
+    color: "#fff",
+    fontSize: 16,
+    flexShrink: 1,
+  },
   displayContainer: { flex: 1, justifyContent: "flex-end", paddingVertical: 30 },
   displayText: {
     color: "#fff",
