@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView } from "react-na
 import { StatusBar } from "expo-status-bar";
 
 const BUTTONS = [
-  ["AC", "+/-", "%", "÷"],
+  ["AC", "⌫", "+/-", "%", "÷"],
   ["7", "8", "9", "×"],
   ["4", "5", "6", "-"],
   ["1", "2", "3", "+"],
@@ -43,6 +43,14 @@ export default function App() {
       setDisplay(display + ".");
     }
   };
+
+  const handleBackspace = () => {
+  if (display.length === 1 || (display.length === 2 && display.startsWith("-"))) {
+    setDisplay("0");
+    return;
+  }
+  setDisplay(display.slice(0, -1));
+};
 
   const toggleSign = () => {
     if (display === "0") return;
@@ -111,6 +119,7 @@ export default function App() {
       case ".": handleDot(); break;
       case "+": case "-": case "×": case "÷": handleOperator(label); break;
       case "=": handleEqual(); break;
+      case "⌫": handleBackspace(); break;
       default: break;
     }
   };
