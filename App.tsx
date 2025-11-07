@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView } from "react-native";
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView } from "react-native";
 import { StatusBar } from "expo-status-bar";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const BUTTONS = [
-  ["AC", "⌫", "+/-", "%", "÷"],
+  ["⌫", "+/-", "%", "÷"],
   ["7", "8", "9", "×"],
   ["4", "5", "6", "-"],
   ["1", "2", "3", "+"],
@@ -15,6 +16,7 @@ export default function App() {
   const [first, setFirst] = useState(null);
   const [operator, setOperator] = useState(null);
   const [waitingForSecond, setWaitingForSecond] = useState(false);
+  const [history, setHistory] = useState<string[]>([]);
 
   const resetAll = () => {
     setDisplay("0");
@@ -23,7 +25,7 @@ export default function App() {
     setWaitingForSecond(false);
   };
 
-  const handleNumber = (num) => {
+  const handleNumber = (num: string) => {
     if (waitingForSecond) {
       setDisplay(num);
       setWaitingForSecond(false);
@@ -45,12 +47,12 @@ export default function App() {
   };
 
   const handleBackspace = () => {
-  if (display.length === 1 || (display.length === 2 && display.startsWith("-"))) {
-    setDisplay("0");
-    return;
-  }
-  setDisplay(display.slice(0, -1));
-};
+    if (display.length === 1 || (display.length === 2 && display.startsWith("-"))) {
+      setDisplay("0");
+      return;
+    }
+    setDisplay(display.slice(0, -1));
+  };
 
   const toggleSign = () => {
     if (display === "0") return;
@@ -64,7 +66,7 @@ export default function App() {
     if (waitingForSecond) setWaitingForSecond(false);
   };
 
-  const handleOperator = (op) => {
+  const handleOperator = (op: string) => {
     if (first === null) {
       setFirst(display);
       setOperator(op);
@@ -95,7 +97,11 @@ export default function App() {
       case "÷": if (b === 0) return "Error"; res = a / b; break;
       default: res = b;
     }
-    return res.toString();
+
+    const formatted = res.toString();
+    const operation = `${a} ${operator} ${b} = ${formatResult(formatted)}`;
+    setHistory((prev) => [operation, ...prev.slice(0, 4)]); // guarda las últimas 5
+    return formatted;
   };
 
   const handleEqual = () => {
@@ -107,24 +113,23 @@ export default function App() {
     setWaitingForSecond(false);
   };
 
-  const onPress = (label) => {
+  const onPress = (label: string) => {
     if (label >= "0" && label <= "9") {
       handleNumber(label);
       return;
     }
     switch (label) {
-      case "AC": resetAll(); break;
+      case "⌫": handleBackspace(); break;
       case "+/-": toggleSign(); break;
       case "%": percent(); break;
       case ".": handleDot(); break;
       case "+": case "-": case "×": case "÷": handleOperator(label); break;
       case "=": handleEqual(); break;
-      case "⌫": handleBackspace(); break;
       default: break;
     }
   };
 
-  const formatResult = (value) => {
+  const formatResult = (value: string) => {
     if (value === "Error") return "Error";
     let num = Number(value);
     if (!isFinite(num) || Number.isNaN(num)) return "Error";
@@ -139,14 +144,27 @@ export default function App() {
       <View style={styles.container}>
         <StatusBar style="light" />
 
-        {/* display */}
+        {/* Historial */}
+        <ScrollView
+          style={styles.historyContainer}
+          contentContainerStyle={{ alignItems: "flex-end" }}
+          showsVerticalScrollIndicator={false}
+        >
+          {history.map((item, index) => (
+            <Text key={index} style={styles.historyText}>
+              {item}
+            </Text>
+          ))}
+        </ScrollView>
+
+        {/* Display */}
         <View style={styles.displayContainer}>
           <Text numberOfLines={1} style={styles.displayText}>
-            {first && operator ? `${first} ${operator} ${waitingForSecond ? "" : display}` : display}
+            {display}
           </Text>
         </View>
 
-        {/* buttons */}
+        {/* Botones */}
         <View style={styles.buttonsContainer}>
           {BUTTONS.map((row, rowIndex) => (
             <View key={`row-${rowIndex}`} style={styles.row}>
@@ -159,7 +177,6 @@ export default function App() {
                     activeOpacity={0.7}
                     style={[
                       styles.button,
-                      label === "AC" && styles.specialButton,
                       (["+", "-", "×", "÷", "="].includes(label)) && styles.operatorButton,
                       isZero && styles.zeroButton,
                     ]}
@@ -187,10 +204,12 @@ export default function App() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "#0b0b0b" },
-  container: { flex: 1, backgroundColor: "#0b0b0b", paddingHorizontal: 18, paddingBottom: 24 },
-  displayContainer: { flex: 1, justifyContent: "flex-end", paddingTop: 40, paddingBottom: 30 },
+  container: { flex: 1, backgroundColor: "#0b0b0b", paddingHorizontal: 20, paddingBottom: 24 },
+  historyContainer: { flexGrow: 0, maxHeight: 120, marginTop: 10 },
+  historyText: { color: "#888", fontSize: 16, marginBottom: 4, textAlign: "right" },
+  displayContainer: { flex: 1, justifyContent: "flex-end", paddingVertical: 30 },
   displayText: {
-    color: "#ffffff",
+    color: "#fff",
     fontSize: 54,
     textAlign: "right",
     fontWeight: "300",
@@ -200,8 +219,8 @@ const styles = StyleSheet.create({
   row: { flexDirection: "row", marginBottom: 12 },
   button: {
     flex: 1,
-    marginHorizontal: 6,
-    height: 72,
+    marginHorizontal: 8,
+    height: 78,
     borderRadius: 18,
     backgroundColor: "#1a1a1a",
     alignItems: "center",
@@ -213,7 +232,6 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   zeroButton: { flex: 2, alignItems: "flex-start", paddingLeft: 28 },
-  specialButton: { backgroundColor: "#2a2a2a" },
   operatorButton: { backgroundColor: "#7e29d9" },
   buttonText: {
     color: "#fff",
